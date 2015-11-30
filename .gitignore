@@ -1,0 +1,8 @@
+a4/a4
+a.out
+*.o
+*.out
+*.png
+minray*
+Makefile
+*.pro
