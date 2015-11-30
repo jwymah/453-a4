@@ -621,7 +621,9 @@ private:
 class Shape
 {
 public:
-    virtual bool intersect(Vector3D, Vector3D) = 0;
+    Vector3D surfaceColour, emissionColour;
+    float transparency, reflectivity;
+    virtual bool intersect(Vector3D rayOrigin, Vector3D rayDir) = 0;
 };
 
 class Sphere: public Shape
@@ -629,8 +631,6 @@ class Sphere: public Shape
 public:
     Vector3D center;
     float radius, radius2;
-    Vector3D surfaceColour, emissionColour;
-    float transparency, reflectivity;
 
     Sphere(Vector3D c, float r, Vector3D sc, Vector3D ec, float reflect = 0, float transp = 0);
     ~Sphere();
@@ -670,7 +670,7 @@ public:
         }
         return false;
 
-        // Geometric solution, not competely sure how it works
+////       Geometric solution, not competely sure how it works
 //        Vector3D l = center - rayOrigin;
 //        float tca = l.dot(rayDir);
 //        if (tca < 0)
