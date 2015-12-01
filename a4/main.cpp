@@ -10,7 +10,7 @@ vector<Shape*> shapes;
 vector<Sphere*> lights;
 Vector3D bgColour = Vector3D();
 int maxDepth = 2;
-float ambient = 0.35;
+Vector3D ambient = Vector3D(0.35,0.35,0.35);
 
 Vector3D reflect(Vector3D incident, Vector3D normal)
 {
@@ -40,21 +40,25 @@ Vector3D phong(Point3D p, Vector3D normal, Vector3D pToViewer, Shape *C)
             }
         }
         // diffuse component
-        Vector3D Ld = Vector3D(1,1,1);
+        Vector3D Ld = Vector3D(0.5,0.5,0.5);
         Vector3D kd = Vector3D(0.75,0.60,0.22);
         Vector3D Id = max(normal.dot(rayToLightSource), 0.0) * kd * Ld;
 
+        float shininess = 0.15; //TODO shininess, kd, ks should be in shapeclass
+        // specular componenet
         Vector3D reflectionVector = 2 * (normal.dot(rayToLightSource)) * normal - rayToLightSource;
         Vector3D viewerVector = pToViewer;
-        Vector3D Ls = Vector3D(1,1,1);
-        float shininess = 0.4; //TODO shininess should be in shapeclass
-        // specular componenet
-        Vector3D Is = C->ks * pow(max(reflectionVector.dot(viewerVector), 0.0), shininess) * Ls;
+        Vector3D Ls = Vector3D(0.5,0.5,0.5);
+        Vector3D ks = Vector3D(0.5,0.5,0.5);
+        Vector3D Is = pow(max(reflectionVector.dot(viewerVector), 0.0), shininess) * ks * Ls;
 
         ret = ret + (Id + Is) * C->surfaceColour;
-//        ret = (Is) * C->surfaceColour;
 //        ret = (Id) * C->surfaceColour;
+//        ret = ret + (Id) * C->surfaceColour;
+//        ret = (Is) * C->surfaceColour;
+//        ret = ret + (Is) * C->surfaceColour;
     }
+
     ret[0] = min(ret[0],255.0);
     ret[0] = max(ret[0],0.0);
     ret[1] = min(ret[1],255.0);
@@ -120,7 +124,7 @@ int main(int argc, char *argv[])
 	// create new image
 	QImage image(width, height, QImage::Format_RGB32);
 
-    // Spherere center, radius, colour, emissionColour; ks;
+    // Spherere center, radius, colour, kd, ks;
 //    shapes.push_back(new Sphere(Vector3D(0,0,-5),   3,      Vector3D(1,1,1),    Vector3D(1,1,1))); //big one at the bottom
 //    shapes.push_back(new Sphere(Vector3D(0,0,-6),   3,      Vector3D(1,0,1),    Vector3D(1,1,1))); //big one at the bottom
 //    shapes.push_back(new Sphere(Vector3D(0,0,-7),   3,      Vector3D(1,0,0),    Vector3D(1,1,1))); //big one at the bottom
@@ -132,13 +136,13 @@ int main(int argc, char *argv[])
 //    shapes.push_back(new Sphere(Vector3D(0,4,-5),   0.25,    Vector3D(0.5,0,0),   Vector3D(1,1,1)));
 
     // spheres from that sample
-    shapes.push_back(new Sphere(Point3D(0,-10004,-20), 10000, Vector3D(0.2,0.2,0.2), 0.5));
-    shapes.push_back(new Sphere(Point3D(0.0,0.0,-20), 4, Vector3D(1,0.32,0.36), 0.5));
-    shapes.push_back(new Sphere(Point3D(5,-1,-15), 2, Vector3D(0.9,0.76,0.46), 0.8));
-    shapes.push_back(new Sphere(Point3D(5,0,-25), 3, Vector3D(0.65,0.77,0.97), 0.5));
-    shapes.push_back(new Sphere(Point3D(-5.5,-0,-15), 3, Vector3D(0.9,0.90,0.90),0.3));
+    shapes.push_back(new Sphere(Point3D(0,-10004,-20), 10000, Vector3D(0.2,0.2,0.2), Vector3D(), Vector3D()));
+    shapes.push_back(new Sphere(Point3D(0.0,0.0,-20), 4, Vector3D(1,0.32,0.36), Vector3D(), Vector3D()));
+    shapes.push_back(new Sphere(Point3D(5,-1,-15), 2, Vector3D(0.9,0.76,0.46), Vector3D(), Vector3D()));
+    shapes.push_back(new Sphere(Point3D(5,0,-25), 3, Vector3D(0.65,0.77,0.97), Vector3D(), Vector3D()));
+    shapes.push_back(new Sphere(Point3D(-5.5,-0,-15), 3, Vector3D(0.9,0.90,0.90), Vector3D(), Vector3D()));
 
-    lights.push_back(new Sphere(Point3D(0,20,-5), 3, Vector3D(), 1));
+    lights.push_back(new Sphere(Point3D(0,20,-5), 3, Vector3D(), Vector3D(), Vector3D()));
 
 	// iterate over the pixels & set colour values
 	for (int x = 0; x < width; x++)

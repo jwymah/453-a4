@@ -184,12 +184,13 @@ public:
     return *this;
   }
 
-  Vector3D& operator *(const Vector3D& other)
+  Vector3D operator *(const Vector3D& other)
   {
-    v_[0] = v_[0] * other.v_[0];
-    v_[1] = v_[1] * other.v_[1];
-    v_[2] = v_[2] * other.v_[2];
-    return *this;
+      Vector3D newVec = Vector3D(
+    v_[0] * other.v_[0],
+    v_[1] * other.v_[1],
+    v_[2] * other.v_[2]);
+      return newVec;
   }
 
   double& operator[](size_t idx)
@@ -631,8 +632,8 @@ private:
 class Shape
 {
 public:
-    Vector3D surfaceColour, kd;
-    float ks, transparency;
+    Vector3D surfaceColour, kd, ks;
+    float transparency;
     bool intersect(Point3D rayOrigin, Vector3D rayDir)
     {
         float t0, t1;
@@ -650,7 +651,7 @@ public:
     Point3D center;
     float radius, radius2;
 
-    Sphere(Point3D c, float r, Vector3D sc, float ksFloat, Vector3D kdVector = Vector3D(), float transp = 0);
+    Sphere(Point3D c, float r, Vector3D sc, Vector3D kdVector, Vector3D ksVector, float transp = 0);
     ~Sphere();
 
     bool intersect(Point3D rayOrigin, Vector3D rayDir, float &t0, float &t1)
