@@ -23,6 +23,8 @@
 #define M_PI 3.14159265358979323846
 #endif
 
+class Vector3D;
+
 class Point2D
 {
 public:
@@ -162,7 +164,7 @@ public:
     v_[2] = 0.0;
   }
   Vector3D(double x, double y, double z)
-  { 
+  {
     v_[0] = x;
     v_[1] = y;
     v_[2] = z;
@@ -182,11 +184,19 @@ public:
     return *this;
   }
 
-  double& operator[](size_t idx) 
+  Vector3D& operator *(const Vector3D& other)
+  {
+    v_[0] = v_[0] * other.v_[0];
+    v_[1] = v_[1] * other.v_[1];
+    v_[2] = v_[2] * other.v_[2];
+    return *this;
+  }
+
+  double& operator[](size_t idx)
   {
     return v_[ idx ];
   }
-  double operator[](size_t idx) const 
+  double operator[](size_t idx) const
   {
     return v_[ idx ];
   }
@@ -621,21 +631,29 @@ private:
 class Shape
 {
 public:
-    Vector3D surfaceColour, emissionColour;
-    float transparency, reflectivity;
-    virtual bool intersect(Vector3D rayOrigin, Vector3D rayDir) = 0;
+    Vector3D surfaceColour, kd;
+    float ks, transparency;
+    bool intersect(Point3D rayOrigin, Vector3D rayDir)
+    {
+        float t0, t1;
+        return intersect(rayOrigin, rayDir, t0, t1);
+    }
+
+    virtual bool intersect(Point3D rayOrigin, Vector3D rayDir, float &t0, float &t1) = 0;
+    // assumes intersecti0on
+    virtual Vector3D normalAt(Point3D p) = 0;
 };
 
 class Sphere: public Shape
 {
 public:
-    Vector3D center;
+    Point3D center;
     float radius, radius2;
 
-    Sphere(Vector3D c, float r, Vector3D sc, Vector3D ec, float reflect = 0, float transp = 0);
+    Sphere(Point3D c, float r, Vector3D sc, float ksFloat, Vector3D kdVector = Vector3D(), float transp = 0);
     ~Sphere();
 
-    bool intersect(Vector3D rayOrigin, Vector3D rayDir)
+    bool intersect(Point3D rayOrigin, Vector3D rayDir, float &t0, float &t1)
     {
         float rayOriginX = rayOrigin[0];
         float rayOriginY = rayOrigin[1];
@@ -657,8 +675,8 @@ public:
                 + pow(rayOriginZ - centerZ, 2)
                 - radius2;
 
-        float t0 = (-b - sqrt(pow(b, 2) - 4*c)) / 2;
-        float t1 = (-b + sqrt(pow(b, 2) - 4*c)) / 2;
+        t0 = (-b - sqrt(pow(b, 2) - 4*c)) / 2;
+        t1 = (-b + sqrt(pow(b, 2) - 4*c)) / 2;
 
         if (t0 > 0.0)
         {
@@ -683,6 +701,15 @@ public:
 //            return false;
 //        }
 //        return true;
+    }
+
+    Vector3D normalAt(Point3D p)
+    {
+        Vector3D n = Vector3D(p[0] - center[0],
+                        p[1] - center[1],
+                        p[2] - center[2]);
+        n.normalize();
+        return n;
     }
 };
 
