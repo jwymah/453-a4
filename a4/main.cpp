@@ -9,7 +9,7 @@ using namespace std;
 vector<Shape*> shapes;
 vector<Sphere*> lights;
 Vector3D bgColour = Vector3D();
-int maxDepth = 2;
+int maxDepth = 3;
 Vector3D ambient = Vector3D(0.35,0.35,0.35);
 
 Vector3D reflect(Vector3D incident, Vector3D normal)
@@ -40,16 +40,17 @@ Vector3D phong(Point3D p, Vector3D normal, Vector3D pToViewer, Shape *C)
             }
         }
         // diffuse component
-        Vector3D Ld = Vector3D(0.5,0.5,0.5);
+        Vector3D Ld = Vector3D(0.2,0.2,0.2);
         Vector3D kd = Vector3D(0.75,0.60,0.22);
         Vector3D Id = max(normal.dot(rayToLightSource), 0.0) * kd * Ld;
 
-        float shininess = 0.15; //TODO shininess, kd, ks should be in shapeclass
+        float shininess = 1.0; //TODO shininess, kd, ks should be in shapeclass
         // specular componenet
         Vector3D reflectionVector = 2 * (normal.dot(rayToLightSource)) * normal - rayToLightSource;
+        reflectionVector.normalize();
         Vector3D viewerVector = pToViewer;
-        Vector3D Ls = Vector3D(0.5,0.5,0.5);
-        Vector3D ks = Vector3D(0.5,0.5,0.5);
+        Vector3D Ls = Vector3D(0.2,0.2,0.2);
+        Vector3D ks = Vector3D(0.3,0.3,0.3);
         Vector3D Is = pow(max(reflectionVector.dot(viewerVector), 0.0), shininess) * ks * Ls;
 
         ret = ret + (Id + Is) * C->surfaceColour;
@@ -74,7 +75,7 @@ Vector3D trace(Point3D origin, Vector3D direction, int depth)
     Point3D q; //intersection point
     Vector3D n, r , t; // normal, reflection, transmission;
 
-    if (depth > maxDepth) return bgColour;
+    if (depth >= maxDepth) return bgColour;
 
     Shape *closest = NULL;
     float tnear = INFINITY;
@@ -103,11 +104,11 @@ Vector3D trace(Point3D origin, Vector3D direction, int depth)
 //    t = transmit(q, n); //refraction.. is this vector going into shape or leaving it? I think going into
     Vector3D pToViewer = -direction;
     local = phong(q, n, pToViewer, closest);
-    reflected = trace(q, n, depth+1);
+    reflected = trace(q + 0.005*n, n, depth+1);
 //    transmitted = trace(q, t, depth+1);
-    return local;
-//    return closest->surfaceColour;
-    //    return local + reflected + transmitted;
+//    return local;
+//    return reflected;
+    return local + reflected;
 }
 
 int main(int argc, char *argv[])
