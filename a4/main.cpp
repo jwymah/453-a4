@@ -8,9 +8,8 @@ using namespace std;
 
 vector<Shape*> shapes;
 vector<Sphere*> lights;
-Vector3D bgColour = Vector3D();
-int maxDepth = 3;
-Vector3D ambient = Vector3D(0.35,0.35,0.35);
+int maxDepth = 4;
+Vector3D ambient = Vector3D(0.1);
 
 Vector3D reflect(Vector3D incident, Vector3D normal)
 {
@@ -34,48 +33,37 @@ Vector3D phong(Point3D p, Vector3D normal, Vector3D pToViewer, Shape *C)
         for (int j=0; j<shapes.size(); j++)
         {
             float t0, t1;
-            if (shapes[j]->intersect(p + 0.0005*normal, rayToLightSource, t0, t1))
+            if (shapes[j]->intersect(p + 0.01*normal, rayToLightSource, t0, t1))
             {
                 return ret;
             }
         }
         // diffuse component
-        Vector3D Ld = Vector3D(0.2,0.2,0.2);
-        Vector3D kd = Vector3D(0.75,0.60,0.22);
+        Vector3D Ld = lights[i]->ld;
+        Vector3D kd = C->kd;
         Vector3D Id = max(normal.dot(rayToLightSource), 0.0) * kd * Ld;
 
-        float shininess = 1.0; //TODO shininess, kd, ks should be in shapeclass
+        float shininess = 30.0;
         // specular componenet
-        Vector3D reflectionVector = 2 * (normal.dot(rayToLightSource)) * normal - rayToLightSource;
+        Vector3D reflectionVector = 2 * (max(normal.dot(rayToLightSource),0.0)) * normal - rayToLightSource;
         reflectionVector.normalize();
         Vector3D viewerVector = pToViewer;
-        Vector3D Ls = Vector3D(0.2,0.2,0.2);
-        Vector3D ks = Vector3D(0.3,0.3,0.3);
+        Vector3D Ls = lights[i]->ls;
+        Vector3D ks = C->ks;
         Vector3D Is = pow(max(reflectionVector.dot(viewerVector), 0.0), shininess) * ks * Ls;
 
         ret = ret + (Id + Is) * C->surfaceColour;
-//        ret = (Id) * C->surfaceColour;
-//        ret = ret + (Id) * C->surfaceColour;
-//        ret = (Is) * C->surfaceColour;
-//        ret = ret + (Is) * C->surfaceColour;
     }
-
-    ret[0] = min(ret[0],255.0);
-    ret[0] = max(ret[0],0.0);
-    ret[1] = min(ret[1],255.0);
-    ret[1] = max(ret[1],0.0);
-    ret[2] = min(ret[2],255.0);
-    ret[2] = max(ret[2],0.0);
     return ret;
 }
 
 Vector3D trace(Point3D origin, Vector3D direction, int depth)
 {
-    Vector3D local, reflected, transmitted;
+    Vector3D local, reflected;
     Point3D q; //intersection point
-    Vector3D n, r , t; // normal, reflection, transmission;
+    Vector3D n, r; // normal, reflection
 
-    if (depth >= maxDepth) return bgColour;
+    if (depth >= maxDepth) return Vector3D();
 
     Shape *closest = NULL;
     float tnear = INFINITY;
@@ -101,14 +89,18 @@ Vector3D trace(Point3D origin, Vector3D direction, int depth)
     q = origin + tnear*direction;
     n = closest->normalAt(q);   // assuming it DOES intersect
     r = reflect(direction, n);
-//    t = transmit(q, n); //refraction.. is this vector going into shape or leaving it? I think going into
     Vector3D pToViewer = -direction;
     local = phong(q, n, pToViewer, closest);
-    reflected = trace(q + 0.005*n, n, depth+1);
-//    transmitted = trace(q, t, depth+1);
-//    return local;
-//    return reflected;
-    return local + reflected;
+    reflected = trace(q + 0.01*n, n, depth+1);
+
+    Vector3D ret =  local + reflected;
+    ret[0] = min(ret[0],1.0);
+    ret[0] = max(ret[0],0.0);
+    ret[1] = min(ret[1],1.0);
+    ret[1] = max(ret[1],0.0);
+    ret[2] = min(ret[2],1.0);
+    ret[2] = max(ret[2],0.0);
+    return ret;
 }
 
 int main(int argc, char *argv[])
@@ -117,33 +109,37 @@ int main(int argc, char *argv[])
 	Q_UNUSED(argc);
 	Q_UNUSED(argv);
 
-	// image width and height
-	// TODO: prompt user on command line for dimensions
-    int width = 640;
-    int height = 480;
+    // image width and height
+    if (argc < 3)
+    {
+        cout << "usage: " << argv[0] << " [width] [height]" << endl;
+        return 1;
+    }
+    int width = atoi(argv[1]);
+    int height = atoi(argv[2]);
 
 	// create new image
 	QImage image(width, height, QImage::Format_RGB32);
 
-    // Spherere center, radius, colour, kd, ks;
-//    shapes.push_back(new Sphere(Vector3D(0,0,-5),   3,      Vector3D(1,1,1),    Vector3D(1,1,1))); //big one at the bottom
-//    shapes.push_back(new Sphere(Vector3D(0,0,-6),   3,      Vector3D(1,0,1),    Vector3D(1,1,1))); //big one at the bottom
-//    shapes.push_back(new Sphere(Vector3D(0,0,-7),   3,      Vector3D(1,0,0),    Vector3D(1,1,1))); //big one at the bottom
-//    shapes.push_back(new Sphere(Vector3D(0,5,-5),   0.5,    Vector3D(0.8,0.75,1),   Vector3D(1,1,1))); // medium one at the top
-
-//    shapes.push_back(new Sphere(Vector3D(-1,3,-5),   0.5,    Vector3D(0.8,0.75,0.1),   Vector3D(1,1,1)));
-//    shapes.push_back(new Sphere(Vector3D(-2,4,-5),   0.5,    Vector3D(0.8,0.95,0),   Vector3D(1,1,1)));
-
-//    shapes.push_back(new Sphere(Vector3D(0,4,-5),   0.25,    Vector3D(0.5,0,0),   Vector3D(1,1,1)));
+    // Spherere center, radius, surfaceColour, kd, ks;
 
     // spheres from that sample
-    shapes.push_back(new Sphere(Point3D(0,-10004,-20), 10000, Vector3D(0.2,0.2,0.2), Vector3D(), Vector3D()));
-    shapes.push_back(new Sphere(Point3D(0.0,0.0,-20), 4, Vector3D(1,0.32,0.36), Vector3D(), Vector3D()));
-    shapes.push_back(new Sphere(Point3D(5,-1,-15), 2, Vector3D(0.9,0.76,0.46), Vector3D(), Vector3D()));
-    shapes.push_back(new Sphere(Point3D(5,0,-25), 3, Vector3D(0.65,0.77,0.97), Vector3D(), Vector3D()));
-    shapes.push_back(new Sphere(Point3D(-5.5,-0,-15), 3, Vector3D(0.9,0.90,0.90), Vector3D(), Vector3D()));
+    shapes.push_back(new Sphere(Point3D(0.0,0.0,-20), 4, Vector3D(1,0.32,0.36), Vector3D(0.5), Vector3D(0.5)));
+    shapes.push_back(new Sphere(Point3D(5,-1,-15), 2, Vector3D(0.9,0.76,0.46), Vector3D(0.2), Vector3D(0.2)));
+    shapes.push_back(new Sphere(Point3D(5,0,-25), 3, Vector3D(0.65,0.77,0.97), Vector3D(0.5), Vector3D(0.5)));
+    shapes.push_back(new Sphere(Point3D(-5.5,-0,-15), 3, Vector3D(0.9,0.90,0.90), Vector3D(0.75,0.60,0.22), Vector3D(0.5)));
+    shapes.push_back(new Sphere(Point3D(0, 25,-40), 15, Vector3D(0.3), Vector3D(0.25), Vector3D(0.25)));
 
-    lights.push_back(new Sphere(Point3D(0,20,-5), 3, Vector3D(), Vector3D(), Vector3D()));
+    //plane(plane(Point, normal, colour, kd, ks, max coord, min coord)
+    shapes.push_back(new Quad(Point3D(0,0,-53), Vector3D(0.3,0.9,1), Vector3D(0.5), Vector3D(0.2), Vector3D(0.2), Vector3D(30,30,-60), Vector3D(-30,-40,-30)));
+
+    //triangle(Point a, Point b, Point c, colour, kd, ks)
+/*    shapes.push_back(new MyTriangle(Point3D(0,-5,0), Point3D(1,-4,-1), Point3D(-1,-6,-1),
+                                    Vector3D(0.5), Vector3D(0.5), Vector3D(0.5)))*/;
+
+    // Lights are spheres with 2 optional additional argument for ld and ls
+    lights.push_back(new Sphere(Point3D(0,20,-20), 0.01, Vector3D(0.3), Vector3D(1), Vector3D(1), Vector3D(0.7), Vector3D(0.7)));
+    lights.push_back(new Sphere(Point3D(-50,50,-50), 0.01, Vector3D(0.3), Vector3D(1), Vector3D(1), Vector3D(1), Vector3D(1)));
 
 	// iterate over the pixels & set colour values
 	for (int x = 0; x < width; x++)
@@ -167,24 +163,13 @@ int main(int argc, char *argv[])
             double g = colour[1];
             double b = colour[2];
 
-//            // try to generate circle at (0,0) diameter half height)
-//            if (pow(x-width/2,2) + pow(y-height/2,2) <= pow(height/10,2))
-//            {
-//                r = 0.5;
-//                g = 0.5;
-//                b = 0.5;
-//            }
-
 			// set pixel value
 			image.setPixel(x, y, 
-				qRgb(r * 255, g * 255, b * 255));
+                qRgb(r*255, g*255, b*255));
 		}
 	}
 
-
-
-	// save to file
-	// TODO: prompt user on command line for output name
+    // save to file
 	image.save("output.png");
 	
 	// application successfully returned

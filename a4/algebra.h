@@ -163,6 +163,12 @@ public:
     v_[1] = 0.0;
     v_[2] = 0.0;
   }
+  Vector3D(double x)
+  {
+    v_[0] = x;
+    v_[1] = x;
+    v_[2] = x;
+  }
   Vector3D(double x, double y, double z)
   {
     v_[0] = x;
@@ -649,9 +655,11 @@ class Sphere: public Shape
 {
 public:
     Point3D center;
+    Vector3D ls, ld;
     float radius, radius2;
 
-    Sphere(Point3D c, float r, Vector3D sc, Vector3D kdVector, Vector3D ksVector, float transp = 0);
+    Sphere(Point3D c, float r, Vector3D sc, Vector3D kdVector, Vector3D ksVector,
+           Vector3D ldVector = Vector3D(1), Vector3D lsVector = Vector3D(1));
     ~Sphere();
 
     bool intersect(Point3D rayOrigin, Vector3D rayDir, float &t0, float &t1)
@@ -688,20 +696,6 @@ public:
             return true;
         }
         return false;
-
-////       Geometric solution, not competely sure how it works
-//        Vector3D l = center - rayOrigin;
-//        float tca = l.dot(rayDir);
-//        if (tca < 0)
-//        {
-//            return false;
-//        }
-//        float d2 = l.dot(l) - tca * tca;
-//        if (d2 > radius2)
-//        {
-//            return false;
-//        }
-//        return true;
     }
 
     Vector3D normalAt(Point3D p)
@@ -710,6 +704,124 @@ public:
                         p[1] - center[1],
                         p[2] - center[2]);
         n.normalize();
+        return n;
+    }
+};
+
+class Plane: public Shape
+{
+public:
+    Point3D p;
+    Vector3D n;
+
+    bool intersect(Point3D rayOrigin, Vector3D rayDir, float &t0, float &t1)
+    {
+        float denom = n.dot(rayDir);
+        if (denom > 0.0001)
+        {
+            Vector3D p0l0 = p - rayOrigin;
+            t0 = p0l0.dot(n) / denom;
+            return (t0 >= 0);
+        }
+        return false;
+    }
+};
+
+class Quad: public Shape
+{
+public:
+    Point3D p;
+    Vector3D n, maxs, mins;
+
+    Quad(Point3D point, Vector3D normal, Vector3D sc, Vector3D kdVector, Vector3D ksVector, Vector3D max, Vector3D min)
+    {
+        p = point;
+        n = normal;
+        surfaceColour = sc;
+        kd = kdVector;
+        ks = ksVector;
+        maxs = max;
+        mins = min;
+        n.normalize();
+    }
+    ~Quad();
+
+    bool intersect(Point3D rayOrigin, Vector3D rayDir, float &t0, float &t1)
+    {
+        float denom = n.dot(rayDir);
+//        std::cout << denom << std::endl;
+        if (denom < -0.0001)
+        {
+            Vector3D p0l0 = p - rayOrigin;
+            t0 = p0l0.dot(n) / denom;
+            Point3D t = rayOrigin + t0*rayDir;
+            if (t[0] < mins[0] || t[0] > maxs[0]
+                    || t[1] < mins[1] || t[1] > maxs[1]
+                    || t[2] > mins[2] || t[2] < maxs[2]) // reversed because looks down -z axis
+            {
+                return false;
+            }
+            return (t0 >= 0);
+        }
+        return false;
+    }
+
+    Vector3D normalAt(Point3D p)
+    {
+        return n;
+    }
+};
+
+class MyTriangle: public Plane
+{
+public:
+    Point3D a, b, c;
+    Vector3D ab, ac;
+
+    MyTriangle(Point3D pointA, Point3D pointB, Point3D pointC, Vector3D sc, Vector3D kdVector, Vector3D ksVector)
+    {
+        a = pointA;
+        b = pointB;
+        c = pointC;
+        p = pointA;
+        n = ab.cross(ac);
+        n.normalize();
+
+        surfaceColour = sc;
+        kd = kdVector;
+        ks = ksVector;
+    }
+    ~MyTriangle();
+
+    bool intersect(Point3D rayOrigin, Vector3D rayDir, float &t0, float &t1)
+    {
+        if (Plane::intersect(rayOrigin, rayDir, t0, t1))
+        {
+            if (insideTriangle(a, b, rayOrigin, rayDir, t0))
+//                    && insideTriangle(b, c, rayOrigin, rayDir, t0)
+//                    && insideTriangle(c, a, rayOrigin, rayDir, t0))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool insideTriangle(Point3D t1, Point3D t2, Point3D rayOrigin, Vector3D rayDir, float &t0)
+    {
+        Vector3D v1 = t1 - rayOrigin;
+        Vector3D v2 = t2 - rayOrigin;
+        Vector3D n1 = v2.cross(v1);
+        n1.normalize();
+        if (n1.dot(rayDir) < 0)
+        {
+            return false;
+        }
+        return true;
+    }
+
+    Vector3D normalAt(Point3D p)
+    {
         return n;
     }
 };

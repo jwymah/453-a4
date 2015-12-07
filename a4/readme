@@ -1,0 +1,82 @@
+CPSC453 - Assignment 4
+
+NAME: Jeremy Mah
+UCID Number: 1005 3908
+Tutorial Section: Tu/Thu @ 2pm
+
+=== 1. EXECUTION: ===
+
+To compile the program, on the terminal enter the following commands:
+
+	qmake -project QT+=widgets
+	qmake
+	make
+
+To run the program, on the terminal enter the following command:
+
+	./a4 [width] [height]
+
+=== 2. PROGRAM USE: ===
+
+To run the program use ./a4 [width] [height]
+
+== 3. ALGORITHMS and DESIGN DECISIONS: ===
+
+All objects drawn are instances of a Shape class, which defines colour, kd, ks values, and an intersect function.
+Lights are instances of spheres.
+Quads and triangles are first tested to see if they intersect that plane, then if inside the triangle/inside the cube that contains that plane.
+Reflection depth set to 7
+
+=== 4. FILES SUBMITTED: ===
+
+algebra.h
+algebra.cpp
+main.cpp
+polyroots.h
+polyroots.cpp
+readme
+
+=== 5. IMAGES SUBMITTED: ===
+
+Phong illumination model components using gold reflectivity attributes.
+diffuse will show shadows.
+images/
+		ambientGold.png
+		diffuseGold.png
+		specularGold.png
+Regular dual lighting, reflections, no triangle
+images/
+		noTriangle.png
+
+Different lights on/off
+images/
+		centerLightOnly.png
+		backLeftLightOnly.png
+		leftLightOnly.png
+		allLights.png
+
+
+=== 6. PROGRAM ASSUMPTIONS: ===
+
+tested on lab computers on resolutions 800x600 and 2000x2000
+=== 7. DECLARATION AND IMAGE PERMISSION: ===
+
+<Initial the following:>
+
+JM__ I have read the regulations regarding plagarism. I affirm with my initials
+that I have worked on my own solution to this assignment, and the code I am
+submitting is my own.
+
+<Mark with an X if desired. No marks will be deducted either way>
+
+x__ I grant the instructor and/or TAs permission to use images submitted and/or
+   assignment screenshots for future CPSC453 courses.
+
+__ If permission has been granted above, I would prefer the images to remain 
+   annonymous. <Otherwise credit will be given, as is due>
+
+x -- I'm probs not gonna win anyways__ I would like to participate in the raytracer competition. <Competition entries will
+   not be annonymous and credited accordingly. Specify which images are for consideration,
+   otherwise all will be considered.> 
+
+__

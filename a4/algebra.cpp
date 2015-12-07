@@ -326,7 +326,8 @@ std::vector<Line3D> Cube::getLines()
 
 
 
-Sphere::Sphere(Point3D c, float r, Vector3D sc, Vector3D kdVector, Vector3D ksVector, float transp)
+Sphere::Sphere(Point3D c, float r, Vector3D sc, Vector3D kdVector, Vector3D ksVector,
+               Vector3D ldVector, Vector3D lsVector)
 {
     center = c;
     radius = r;
@@ -334,6 +335,17 @@ Sphere::Sphere(Point3D c, float r, Vector3D sc, Vector3D kdVector, Vector3D ksVe
     surfaceColour = sc;
     ks = ksVector;
     kd = kdVector;
-    transparency = transp;
+    ld = ldVector;
+    ls = lsVector;
 }
 Sphere::~Sphere() { }
+
+//Plane::Plane(Point3D point, Vector3D normal, Vector3D sc, Vector3D kdVector, Vector3D ksVector)
+//{
+//    p = point;
+//    n = normal;
+//    surfaceColour = sc;
+//    kd = kdVector;
+//    ks = ksVector;
+//    n.normalize();
+//}Plane::~Plane() {}
